@@ -1,8 +1,8 @@
 from gui.app_gui import SistemaExpertoApp
-import data.load_knowledge  # Importar módulo que carga la base de conocimiento
+from data.load_knowledge import cargar_base_conocimiento  # Asegúrate de tener este archivo
 
-# Cargar el conocimiento antes de iniciar la app
-data.load_knowledge.cargar_base_conocimiento()
+# Cargar conocimiento guardado al iniciar
+cargar_base_conocimiento()
 
 if __name__ == "__main__":
     app = SistemaExpertoApp()

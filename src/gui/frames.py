@@ -35,22 +35,13 @@ def crear_frame_bienvenida(app):
                       font=("Arial", 14), bg="#34495E", fg="white", justify="center")
     pregunta.pack(pady=20)
     
-    # Botones de navegación
-    nav_frame = tk.Frame(frame, bg="#34495E")
-    nav_frame.pack(side="bottom", pady=20)
+    # Botones de acción
+    btn_si = tk.Button(frame, text="¡Sí, comencemos!", 
+                     command=app.siguiente_frame,
+                     bg="#2ECC71", fg="white", font=("Arial", 12), padx=20, pady=10)
+    btn_si.pack(pady=10)
     
-    btn_siguiente = tk.Button(nav_frame, text="▶", font=("Arial", 12), 
-                            command=lambda: app.siguiente_frame())
-    btn_siguiente.pack(side="right", padx=10)
-    
-    # Agregar botón Modo Experto en la esquina superior derecha
-    btn_experto = tk.Button(
-        frame, 
-        text="👨‍🔬 Modo Experto", 
-        command=lambda: abrir_modo_experto(app),
-        bg="#9b59b6", fg="white", font=("Arial", 10)
-    )
-    btn_experto.place(relx=0.95, rely=0.05, anchor="ne")
+   
     
     return frame
 

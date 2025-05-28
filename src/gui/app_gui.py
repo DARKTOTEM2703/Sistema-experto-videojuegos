@@ -123,6 +123,8 @@ class SistemaExpertoApp:
             
             if alternativas:
                 self._mostrar_alternativas(alternativas)
+                # Añadir opción para agregar conocimiento aunque haya alternativas parciales
+                self._mostrar_opcion_agregar_conocimiento()
             else:
                 self._mostrar_sin_recomendaciones()
     
@@ -386,134 +388,158 @@ class SistemaExpertoApp:
         self.root.mainloop()
     
     def _abrir_ventana_ensenar(self):
-        """Abrir ventana para que el usuario enseñe al sistema un nuevo juego"""
+        """Abre una ventana para que el usuario enseñe al sistema un nuevo juego"""
+        from tkinter import messagebox
+        import json
+        import os
+        from datetime import datetime
+        
         ventana_ensenar = tk.Toplevel(self.root)
-        ventana_ensenar.title("Enseñar al Sistema")
-        ventana_ensenar.geometry("600x500")
+        ventana_ensenar.title("Agregar Nuevo Juego")
+        ventana_ensenar.geometry("600x450")
         ventana_ensenar.configure(bg="#2C3E50")
         
         # Título
-        titulo = tk.Label(ventana_ensenar, text="Enseña un nuevo juego al sistema", 
-                         font=("Arial", 16, "bold"), bg="#2C3E50", fg="#ECF0F1")
+        titulo = tk.Label(ventana_ensenar, text="Agregar nuevo juego a la base de conocimiento",
+                    font=("Arial", 16, "bold"), bg="#2C3E50", fg="#ECF0F1")
         titulo.pack(pady=20)
         
-        # Frame para el formulario
-        form_frame = tk.Frame(ventana_ensenar, bg="#34495E", pady=20)
-        form_frame.pack(fill="both", expand=True, padx=20)
+        # Mostrar los parámetros seleccionados
+        parametros_frame = tk.Frame(ventana_ensenar, bg="#34495E", padx=20, pady=10)
+        parametros_frame.pack(fill="x", padx=20)
         
-        # Mostrar las selecciones actuales
-        selecciones_frame = tk.Frame(form_frame, bg="#34495E")
-        selecciones_frame.pack(fill="x", pady=10)
+        # Título de parámetros
+        param_titulo = tk.Label(parametros_frame, text="Parámetros seleccionados:",
+                      font=("Arial", 12, "bold"), bg="#34495E", fg="#F39C12")
+        param_titulo.pack(anchor="w", pady=(0, 10))
         
-        selecciones_titulo = tk.Label(selecciones_frame, text="Basado en tus selecciones:",
-                                    font=("Arial", 12, "bold"), bg="#34495E", fg="#F39C12")
-        selecciones_titulo.pack(anchor="w")
-        
-        # Obtener los valores seleccionados
+        # Obtener parámetros
         narrativa = self.respuestas['narrativa']
         estilo = self.respuestas['estilo']
         estetica = self.respuestas['estetica']
         dinamica = self.respuestas['dinamica']
         
-        criterios = [
-            f"• Narrativa: {narrativa}",
-            f"• Estilo de juego: {estilo}",
-            f"• Estética visual: {estetica}",
-            f"• Dinámica: {dinamica}"
-        ]
+        # Mostrar cada parámetro
+        param_narrativa = tk.Label(parametros_frame, text=f"• Narrativa: {narrativa}",
+                        font=("Arial", 10), bg="#34495E", fg="white")
+        param_narrativa.pack(anchor="w", padx=10)
         
-        for criterio in criterios:
-            crit_lbl = tk.Label(selecciones_frame, text=criterio,
-                              font=("Arial", 11), bg="#34495E", fg="white")
-            crit_lbl.pack(anchor="w", padx=20)
+        param_estilo = tk.Label(parametros_frame, text=f"• Estilo de juego: {estilo}",
+                      font=("Arial", 10), bg="#34495E", fg="white")
+        param_estilo.pack(anchor="w", padx=10)
         
-        # Sección para agregar nuevo juego
-        nueva_rec_frame = tk.Frame(form_frame, bg="#34495E", pady=10)
-        nueva_rec_frame.pack(fill="x")
+        param_estetica = tk.Label(parametros_frame, text=f"• Estética visual: {estetica}",
+                        font=("Arial", 10), bg="#34495E", fg="white")
+        param_estetica.pack(anchor="w", padx=10)
         
-        nueva_rec_titulo = tk.Label(nueva_rec_frame, text="Información del juego recomendado:",
-                                 font=("Arial", 12, "bold"), bg="#34495E", fg="#F39C12")
-        nueva_rec_titulo.pack(anchor="w", pady=(20, 10))
+        param_dinamica = tk.Label(parametros_frame, text=f"• Dinámica: {dinamica}",
+                        font=("Arial", 10), bg="#34495E", fg="white")
+        param_dinamica.pack(anchor="w", padx=10)
         
-        # Nombre del juego
-        nombre_frame = tk.Frame(nueva_rec_frame, bg="#34495E")
+        # Determinar nombre del juego automáticamente según los parámetros
+        if narrativa == "Juego de Tronos":
+            prefijo = "Tronos"
+        elif narrativa == "Star Wars":
+            prefijo = "Galaxia" 
+        elif narrativa == "The Walking Dead":
+            prefijo = "Cuarentena"
+        elif narrativa == "Black Mirror":
+            prefijo = "Realidad"
+    
+        if estilo == "Solo":
+            sufijo = "Interior"
+        elif estilo == "Con amigos":
+            sufijo = "Conexión"
+        elif estilo == "Competencia online":
+            sufijo = "Batalla"
+        elif estilo == "Explorar sin presión":
+            sufijo = "Viaje"
+    
+        nombre_sugerido = f"{prefijo} {sufijo}"
+        
+        # Form para nombre y descripción
+        form_frame = tk.Frame(ventana_ensenar, bg="#34495E", padx=20, pady=20)
+        form_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        # Nombre del juego (editable pero presugerido)
+        nombre_frame = tk.Frame(form_frame, bg="#34495E")
         nombre_frame.pack(fill="x", pady=5)
         
         nombre_lbl = tk.Label(nombre_frame, text="Nombre del juego:",
-                            font=("Arial", 11), bg="#34495E", fg="white", width=20, anchor="w")
+                            font=("Arial", 11), bg="#34495E", fg="white")
         nombre_lbl.pack(side="left")
         
-        nombre_var = tk.StringVar()
-        nombre_entry = tk.Entry(nombre_frame, textvariable=nombre_var, font=("Arial", 11), width=30)
-        nombre_entry.pack(side="left")
+        nombre_var = tk.StringVar(value=nombre_sugerido)
+        nombre_entry = tk.Entry(nombre_frame, textvariable=nombre_var, width=30, font=("Arial", 11))
+        nombre_entry.pack(side="left", padx=10)
         
-        # Descripción
-        desc_frame = tk.Frame(nueva_rec_frame, bg="#34495E")
-        desc_frame.pack(fill="x", pady=5)
+        # Campo para descripción
+        desc_titulo = tk.Label(form_frame, text="Descripción del juego:",
+                          font=("Arial", 12), bg="#34495E", fg="#F39C12")
+        desc_titulo.pack(anchor="w", pady=(10, 5))
         
-        desc_lbl = tk.Label(desc_frame, text="Descripción:",
-                         font=("Arial", 11), bg="#34495E", fg="white", width=20, anchor="nw")
-        desc_lbl.pack(side="left", anchor="n")
+        desc_text = tk.Text(form_frame, height=6, width=50, font=("Arial", 10))
+        desc_text.pack(fill="both", expand=True, padx=10, pady=5)
         
-        desc_text = tk.Text(desc_frame, height=6, width=30, font=("Arial", 11))
-        desc_text.pack(side="left")
+        # Frame para botones
+        botones_frame = tk.Frame(ventana_ensenar, bg="#2C3E50", pady=10)
+        botones_frame.pack(fill="x", side="bottom")
         
-        # Botones de acción
-        botones_frame = tk.Frame(form_frame, bg="#34495E", pady=20)
-        botones_frame.pack()
-        
-        # Función para guardar el nuevo conocimiento
+        # Función para guardar el nuevo juego
         def guardar_conocimiento():
-            nombre = nombre_var.get().strip()
+            # Obtener nombre y descripción
+            nombre_juego = nombre_var.get().strip()
             descripcion = desc_text.get("1.0", "end-1c").strip()
             
-            # Validar datos
-            if not nombre or not descripcion:
+            if not nombre_juego or not descripcion:
                 messagebox.showwarning("Campos incompletos", "Por favor completa todos los campos")
                 return
             
-            # Crear la clave y el valor
+            # Importar el diccionario de juegos
             from data.juegos_dictionary import videojuegos
-            import os
-            import json
             
+            # Crear clave y valor
             clave = (narrativa, estilo, estetica, dinamica)
-            url_imagen = f"images/{nombre.lower().replace(' ', '_')}.png"  # URL para futura imagen
-            valor = (nombre, url_imagen, descripcion)
+            # Crear nombre de archivo único para la imagen futura
+            nombre_archivo = f"{nombre_juego.lower().replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            valor = (nombre_juego, f"images/{nombre_archivo}.png", descripcion)
             
             # Guardar en el diccionario
             videojuegos[clave] = valor
             
-            # Guardar en JSON para persistencia
+            # Guardar en archivo JSON para persistencia
             self._guardar_base_conocimiento()
             
-            # Cerrar ventana y mostrar mensaje de éxito
+            # Cerrar ventana
             ventana_ensenar.destroy()
-            messagebox.showinfo("Gracias por enseñarme", 
-                             f"He aprendido sobre el juego '{nombre}'.\nAhora puedo recomendarlo a usuarios con preferencias similares.")
             
-            # Actualizar la vista para mostrar la nueva recomendación
+            # Mostrar mensaje de éxito
+            messagebox.showinfo("Conocimiento adquirido", 
+                              f"¡Gracias! He aprendido sobre el juego '{nombre_juego}'.\n"
+                              "La próxima vez que selecciones estos parámetros, te recomendaré este juego.")
+            
+            # Actualizar la vista actual para mostrar el nuevo conocimiento
             self.generar_y_mostrar_resultados()
         
-        # Botón guardar
-        btn_guardar = tk.Button(botones_frame, text="Guardar Recomendación", 
+        # Botón de guardar
+        btn_guardar = tk.Button(botones_frame, text="Guardar conocimiento",
                              command=guardar_conocimiento,
                              bg="#2ECC71", fg="white", font=("Arial", 11),
                              padx=10, pady=5)
-        btn_guardar.pack(side="left", padx=10)
+        btn_guardar.pack(side="right", padx=20)
         
         # Botón cancelar
-        btn_cancelar = tk.Button(botones_frame, text="Cancelar", 
-                            command=ventana_ensenar.destroy,
-                            bg="#E74C3C", fg="white", font=("Arial", 11),
-                            padx=10, pady=5)
-        btn_cancelar.pack(side="left", padx=10)
+        btn_cancelar = tk.Button(botones_frame, text="Cancelar",
+                           command=ventana_ensenar.destroy,
+                           bg="#E74C3C", fg="white", font=("Arial", 11),
+                           padx=10, pady=5)
+        btn_cancelar.pack(side="left", padx=20)
     
     def _guardar_base_conocimiento(self):
         """Guardar la base de conocimiento en un archivo JSON para persistencia"""
         from data.juegos_dictionary import videojuegos
-        import os
         import json
+        import os
         
         # Convertir el diccionario a un formato serializable
         data = {}
@@ -522,7 +548,38 @@ class SistemaExpertoApp:
             str_clave = "||".join(clave)
             data[str_clave] = valor
         
-        # Guardar en archivo
+        # Asegurar que el directorio data existe
         os.makedirs('data', exist_ok=True)
+        
+        # Guardar en archivo
         with open('data/base_conocimiento.json', 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
+    
+    def _mostrar_opcion_agregar_conocimiento(self):
+        """Muestra un separador y botón para agregar un juego para la combinación actual"""
+        # Crear un separador visual
+        separador = tk.Frame(self.resultado_frame, height=2, bg="#7f8c8d")
+        separador.pack(fill="x", pady=15, padx=20)
+        
+        # Frame para la opción de agregar conocimiento
+        agregar_frame = tk.Frame(self.resultado_frame, bg="#34495E", pady=15)
+        agregar_frame.pack(fill="x", padx=20, pady=10)
+        
+        # Mensaje explicativo
+        mensaje = tk.Label(
+            agregar_frame,
+            text="¿Conoces un juego que coincida exactamente con los criterios seleccionados?\n¡Ayúdame a aprender!",
+            font=("Arial", 12), bg="#34495E", fg="#F39C12",
+            wraplength=500, justify="center"
+        )
+        mensaje.pack(pady=10)
+        
+        # Botón para agregar conocimiento
+        btn_agregar = tk.Button(
+            agregar_frame,
+            text="🧠 Agregar un juego para esta combinación exacta",
+            command=self._abrir_ventana_ensenar,
+            bg="#2ECC71", fg="white", font=("Arial", 11),
+            padx=10, pady=5
+        )
+        btn_agregar.pack(pady=10)
