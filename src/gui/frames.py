@@ -18,8 +18,8 @@ def crear_frame_base(app, titulo, numero_frame):
     return frame
 
 def crear_frame_bienvenida(app):
-    """Frame 1: Bienvenida"""
-    frame = crear_frame_base(app, "🎮 Sistema Experto de Videojuegos", 1)
+    """Frame 1: Pantalla de bienvenida"""
+    frame = crear_frame_base(app, "Bienvenido al Sistema Experto de Recomendación de Videojuegos", 1)
     
     # Imagen/icono del personaje (simulado con texto)
     char_frame = tk.Frame(frame, bg="#D4A574", width=200, height=150)
@@ -43,7 +43,51 @@ def crear_frame_bienvenida(app):
                             command=lambda: app.siguiente_frame())
     btn_siguiente.pack(side="right", padx=10)
     
+    # Agregar botón Modo Experto en la esquina superior derecha
+    btn_experto = tk.Button(
+        frame, 
+        text="👨‍🔬 Modo Experto", 
+        command=lambda: abrir_modo_experto(app),
+        bg="#9b59b6", fg="white", font=("Arial", 10)
+    )
+    btn_experto.place(relx=0.95, rely=0.05, anchor="ne")
+    
     return frame
+
+def abrir_modo_experto(app):
+    """Abre el modo experto para gestionar la base de conocimiento"""
+    # Crear ventana para modo experto
+    ventana_experto = tk.Toplevel(app.root)
+    ventana_experto.title("Modo Experto - Gestión de Base de Conocimiento")
+    ventana_experto.geometry("900x600")
+    ventana_experto.configure(bg="#2C3E50")
+    
+    # Crear interfaz de administración
+    admin_frame = tk.Frame(ventana_experto, bg="#34495E", padx=20, pady=20)
+    admin_frame.pack(fill="both", expand=True)
+    
+    # Título
+    titulo = tk.Label(admin_frame, text="Administración de Base de Conocimiento", 
+                   font=("Arial", 16, "bold"), bg="#34495E", fg="#ECF0F1")
+    titulo.pack(pady=20)
+    
+    # Crear notebook (pestañas)
+    notebook = ttk.Notebook(admin_frame)
+    notebook.pack(fill="both", expand=True)
+    
+    # Pestaña 1: Agregar conocimiento
+    tab_agregar = tk.Frame(notebook, bg="#2C3E50")
+    notebook.add(tab_agregar, text="Agregar Conocimiento")
+    
+    # Campos para agregar nuevo conocimiento
+    crear_formulario_agregar(tab_agregar, app)
+    
+    # Pestaña 2: Ver/Editar conocimiento
+    tab_editar = tk.Frame(notebook, bg="#2C3E50")
+    notebook.add(tab_editar, text="Ver/Editar Conocimiento")
+    
+    # Tabla para ver y editar conocimiento existente
+    crear_tabla_conocimiento(tab_editar, app)
 
 def crear_frame_narrativa(app):
     """Frame 2: Pregunta sobre narrativa"""

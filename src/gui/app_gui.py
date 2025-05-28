@@ -158,11 +158,58 @@ class SistemaExpertoApp:
         )
         btn_generar_img.pack(pady=10)
         
-        # Descripción
-        self._mostrar_descripcion(descripcion)
+        # Botón para ver/ocultar la explicación
+        self.explicacion_visible = False
+        self.explicacion_frame = tk.Frame(self.resultado_frame, bg="#34495E")
+        self.explicacion_frame.pack(fill="x", padx=20, pady=10)
+        self.explicacion_frame.pack_forget()  # Ocultar inicialmente
+        
+        # Contenido de la explicación (inicialmente oculto)
+        desc_title = tk.Label(
+            self.explicacion_frame, 
+            text="📝 EXPLICACIÓN:",
+            font=("Arial", 12, "bold"), bg="#34495E", fg="#F39C12"
+        )
+        desc_title.pack(pady=5)
+        
+        desc_label = tk.Label(
+            self.explicacion_frame, 
+            text=descripcion,
+            font=("Arial", 11), bg="#34495E", fg="white", 
+            wraplength=500, justify="left"
+        )
+        desc_label.pack(pady=10)
+        
+        # Botón para mostrar/ocultar explicación
+        btn_explicacion = tk.Button(
+            self.resultado_frame,
+            text="📝 Ver explicación",
+            command=self._toggle_explicacion,
+            bg="#9b59b6", fg="white", font=("Arial", 11)
+        )
+        btn_explicacion.pack(pady=5)
         
         # Mostrar criterios
         self._mostrar_criterios_seleccionados()
+
+    def _toggle_explicacion(self):
+        """Mostrar u ocultar la explicación"""
+        if self.explicacion_visible:
+            self.explicacion_frame.pack_forget()
+            # Buscar y actualizar el botón con el texto correcto
+            for widget in self.resultado_frame.winfo_children():
+                if isinstance(widget, tk.Button) and "explicación" in widget["text"]:
+                    widget.config(text="📝 Ver explicación")
+                    break
+        else:
+            self.explicacion_frame.pack(fill="x", padx=20, pady=10)
+            # Buscar y actualizar el botón con el texto correcto
+            for widget in self.resultado_frame.winfo_children():
+                if isinstance(widget, tk.Button) and "explicación" in widget["text"]:
+                    widget.config(text="🔼 Ocultar explicación")
+                    break
+        
+        self.explicacion_visible = not self.explicacion_visible
     
     def _mostrar_alternativas(self, alternativas):
         """Mostrar recomendaciones alternativas"""
@@ -200,15 +247,6 @@ class SistemaExpertoApp:
         )
         alt_nombre.pack(anchor="w")
         
-        # Descripción
-        alt_desc = tk.Label(
-            alt_frame, 
-            text=desc,
-            font=("Arial", 10), bg="#2C3E50", fg="white", 
-            wraplength=450, justify="left"
-        )
-        alt_desc.pack(anchor="w", pady=5)
-        
         # Coincidencias
         alt_coinc = tk.Label(
             alt_frame, 
@@ -225,6 +263,41 @@ class SistemaExpertoApp:
             bg="#3498DB", fg="white", font=("Arial", 9)
         )
         btn_img.pack(anchor="e", pady=5)
+        
+        # Crear un frame para la explicación (inicialmente oculto)
+        exp_frame = tk.Frame(alt_frame, bg="#2C3E50")
+        
+        # Descripción
+        alt_desc = tk.Label(
+            exp_frame, 
+            text=desc,
+            font=("Arial", 10), bg="#2C3E50", fg="white", 
+            wraplength=450, justify="left"
+        )
+        alt_desc.pack(pady=5)
+        
+        # Variable para controlar visibilidad
+        visible = tk.BooleanVar(value=False)
+        
+        # Función para mostrar/ocultar explicación
+        def toggle_exp():
+            if visible.get():
+                exp_frame.pack_forget()
+                btn_exp.config(text="📝 Ver explicación")
+                visible.set(False)
+            else:
+                exp_frame.pack(fill="x", pady=5)
+                btn_exp.config(text="🔼 Ocultar explicación")
+                visible.set(True)
+        
+        # Botón para mostrar/ocultar explicación
+        btn_exp = tk.Button(
+            alt_frame,
+            text="📝 Ver explicación",
+            command=toggle_exp,
+            bg="#9b59b6", fg="white", font=("Arial", 9)
+        )
+        btn_exp.pack(anchor="w", pady=5)
     
     def _mostrar_descripcion(self, descripcion):
         """Mostrar la descripción del juego"""
@@ -268,13 +341,36 @@ class SistemaExpertoApp:
             crit_label.pack(pady=2, padx=20, anchor="w")
     
     def _mostrar_sin_recomendaciones(self):
-        """Mostrar mensaje cuando no hay recomendaciones"""
+        """Mostrar mensaje cuando no hay recomendaciones y permitir enseñar al sistema"""
+        # Mensaje principal
         sin_rec = tk.Label(
             self.resultado_frame, 
-            text="Lo siento, no se encontraron juegos que coincidan con tus preferencias.",
+            text="No encontré juegos que coincidan con estas preferencias.",
             font=("Arial", 12), bg="#34495E", fg="#E74C3C"
         )
         sin_rec.pack(pady=20)
+        
+        # Mostrar criterios seleccionados para que el usuario vea qué combinación no existe
+        self._mostrar_criterios_seleccionados()
+        
+        # Mensaje invitando a enseñar al sistema
+        aprender_msg = tk.Label(
+            self.resultado_frame,
+            text="¿Conoces algún juego que podría recomendarse con estas preferencias?\n¡Ayúdame a aprender!",
+            font=("Arial", 12), bg="#34495E", fg="#F39C12",
+            wraplength=500, justify="center"
+        )
+        aprender_msg.pack(pady=20)
+        
+        # Botón para enseñar al sistema
+        btn_ensenar = tk.Button(
+            self.resultado_frame,
+            text="🧠 Enseñar al sistema",
+            command=self._abrir_ventana_ensenar,
+            bg="#2ECC71", fg="white", font=("Arial", 12),
+            padx=10, pady=5
+        )
+        btn_ensenar.pack(pady=10)
     
     def reiniciar_sistema(self):
         """Reiniciar el sistema para una nueva consulta"""
@@ -288,3 +384,145 @@ class SistemaExpertoApp:
     def ejecutar(self):
         """Ejecutar la aplicación"""
         self.root.mainloop()
+    
+    def _abrir_ventana_ensenar(self):
+        """Abrir ventana para que el usuario enseñe al sistema un nuevo juego"""
+        ventana_ensenar = tk.Toplevel(self.root)
+        ventana_ensenar.title("Enseñar al Sistema")
+        ventana_ensenar.geometry("600x500")
+        ventana_ensenar.configure(bg="#2C3E50")
+        
+        # Título
+        titulo = tk.Label(ventana_ensenar, text="Enseña un nuevo juego al sistema", 
+                         font=("Arial", 16, "bold"), bg="#2C3E50", fg="#ECF0F1")
+        titulo.pack(pady=20)
+        
+        # Frame para el formulario
+        form_frame = tk.Frame(ventana_ensenar, bg="#34495E", pady=20)
+        form_frame.pack(fill="both", expand=True, padx=20)
+        
+        # Mostrar las selecciones actuales
+        selecciones_frame = tk.Frame(form_frame, bg="#34495E")
+        selecciones_frame.pack(fill="x", pady=10)
+        
+        selecciones_titulo = tk.Label(selecciones_frame, text="Basado en tus selecciones:",
+                                    font=("Arial", 12, "bold"), bg="#34495E", fg="#F39C12")
+        selecciones_titulo.pack(anchor="w")
+        
+        # Obtener los valores seleccionados
+        narrativa = self.respuestas['narrativa']
+        estilo = self.respuestas['estilo']
+        estetica = self.respuestas['estetica']
+        dinamica = self.respuestas['dinamica']
+        
+        criterios = [
+            f"• Narrativa: {narrativa}",
+            f"• Estilo de juego: {estilo}",
+            f"• Estética visual: {estetica}",
+            f"• Dinámica: {dinamica}"
+        ]
+        
+        for criterio in criterios:
+            crit_lbl = tk.Label(selecciones_frame, text=criterio,
+                              font=("Arial", 11), bg="#34495E", fg="white")
+            crit_lbl.pack(anchor="w", padx=20)
+        
+        # Sección para agregar nuevo juego
+        nueva_rec_frame = tk.Frame(form_frame, bg="#34495E", pady=10)
+        nueva_rec_frame.pack(fill="x")
+        
+        nueva_rec_titulo = tk.Label(nueva_rec_frame, text="Información del juego recomendado:",
+                                 font=("Arial", 12, "bold"), bg="#34495E", fg="#F39C12")
+        nueva_rec_titulo.pack(anchor="w", pady=(20, 10))
+        
+        # Nombre del juego
+        nombre_frame = tk.Frame(nueva_rec_frame, bg="#34495E")
+        nombre_frame.pack(fill="x", pady=5)
+        
+        nombre_lbl = tk.Label(nombre_frame, text="Nombre del juego:",
+                            font=("Arial", 11), bg="#34495E", fg="white", width=20, anchor="w")
+        nombre_lbl.pack(side="left")
+        
+        nombre_var = tk.StringVar()
+        nombre_entry = tk.Entry(nombre_frame, textvariable=nombre_var, font=("Arial", 11), width=30)
+        nombre_entry.pack(side="left")
+        
+        # Descripción
+        desc_frame = tk.Frame(nueva_rec_frame, bg="#34495E")
+        desc_frame.pack(fill="x", pady=5)
+        
+        desc_lbl = tk.Label(desc_frame, text="Descripción:",
+                         font=("Arial", 11), bg="#34495E", fg="white", width=20, anchor="nw")
+        desc_lbl.pack(side="left", anchor="n")
+        
+        desc_text = tk.Text(desc_frame, height=6, width=30, font=("Arial", 11))
+        desc_text.pack(side="left")
+        
+        # Botones de acción
+        botones_frame = tk.Frame(form_frame, bg="#34495E", pady=20)
+        botones_frame.pack()
+        
+        # Función para guardar el nuevo conocimiento
+        def guardar_conocimiento():
+            nombre = nombre_var.get().strip()
+            descripcion = desc_text.get("1.0", "end-1c").strip()
+            
+            # Validar datos
+            if not nombre or not descripcion:
+                messagebox.showwarning("Campos incompletos", "Por favor completa todos los campos")
+                return
+            
+            # Crear la clave y el valor
+            from data.juegos_dictionary import videojuegos
+            import os
+            import json
+            
+            clave = (narrativa, estilo, estetica, dinamica)
+            url_imagen = f"images/{nombre.lower().replace(' ', '_')}.png"  # URL para futura imagen
+            valor = (nombre, url_imagen, descripcion)
+            
+            # Guardar en el diccionario
+            videojuegos[clave] = valor
+            
+            # Guardar en JSON para persistencia
+            self._guardar_base_conocimiento()
+            
+            # Cerrar ventana y mostrar mensaje de éxito
+            ventana_ensenar.destroy()
+            messagebox.showinfo("Gracias por enseñarme", 
+                             f"He aprendido sobre el juego '{nombre}'.\nAhora puedo recomendarlo a usuarios con preferencias similares.")
+            
+            # Actualizar la vista para mostrar la nueva recomendación
+            self.generar_y_mostrar_resultados()
+        
+        # Botón guardar
+        btn_guardar = tk.Button(botones_frame, text="Guardar Recomendación", 
+                             command=guardar_conocimiento,
+                             bg="#2ECC71", fg="white", font=("Arial", 11),
+                             padx=10, pady=5)
+        btn_guardar.pack(side="left", padx=10)
+        
+        # Botón cancelar
+        btn_cancelar = tk.Button(botones_frame, text="Cancelar", 
+                            command=ventana_ensenar.destroy,
+                            bg="#E74C3C", fg="white", font=("Arial", 11),
+                            padx=10, pady=5)
+        btn_cancelar.pack(side="left", padx=10)
+    
+    def _guardar_base_conocimiento(self):
+        """Guardar la base de conocimiento en un archivo JSON para persistencia"""
+        from data.juegos_dictionary import videojuegos
+        import os
+        import json
+        
+        # Convertir el diccionario a un formato serializable
+        data = {}
+        for clave, valor in videojuegos.items():
+            # Convertir tupla a string para usar como clave en JSON
+            str_clave = "||".join(clave)
+            data[str_clave] = valor
+        
+        # Guardar en archivo
+        os.makedirs('data', exist_ok=True)
+        with open('data/base_conocimiento.json', 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
